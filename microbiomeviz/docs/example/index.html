@@ -1,0 +1,993 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <title>Helios Example</title>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      font-family: -apple-system, 'Helvetica Neue', "Arial", BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', sans-serif;
+      position: fixed;
+      height: 100%;
+      width: 100%;
+      margin: 0px;
+      background: rgba(153, 153, 153, 1.0);
+      overflow: hidden;
+      -webkit-touch-callout: none;
+      /* iOS Safari */
+      -webkit-user-select: none;
+      /* Safari */
+      -khtml-user-select: none;
+      /* Konqueror HTML */
+      -moz-user-select: none;
+      /* Old versions of Firefox */
+      -ms-user-select: none;
+      /* Internet Explorer/Edge */
+      user-select: none;
+      /* Non-prefixed version, currently
+                                        supported by Chrome, Edge, Opera and Firefox */
+
+    }
+
+
+    #loadingPanel {
+      /* Center object to the whole screen */
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      /* Make sure it's above everything else */
+      z-index: 1000;
+      /* Make it invisible by default */
+    }
+
+    #centerloading {
+      position: relative;
+      top: 5px;
+      right: 5px;
+      width: 64px;
+      height: 64px;
+      margin: auto;
+      border: 2px solid rgba(125, 125, 125, .3);
+      border-radius: 50%;
+      border-top-color: rgba(125, 125, 125, 1.0);
+      animation: spin 2s linear infinite;
+      -webkit-animation: spin 2s linear infinite;
+    }
+
+    #loading {
+      display: none;
+      position: absolute;
+      bottom: 28px;
+      left: 5px;
+      width: 12px;
+      height: 12px;
+      border: 2px solid rgba(125, 125, 125, .3);
+      border-radius: 50%;
+      border-top-color: rgba(125, 125, 125, 1.0);
+      animation: spin 2s linear infinite;
+      -webkit-animation: spin 2s linear infinite;
+    }
+
+    #message {
+      position: absolute;
+      bottom: 28px;
+      left: 5px;
+      text-align: left;
+      font-size: small;
+      color: rgba(125, 125, 125, .75);
+    }
+
+    @keyframes spin {
+      to {
+        -webkit-transform: rotate(360deg);
+      }
+    }
+
+    @-webkit-keyframes spin {
+      to {
+        -webkit-transform: rotate(360deg);
+      }
+    }
+
+
+    #netviz {
+      position: absolute;
+      top: 0;
+      right: 0;
+      left: 0;
+      bottom: 0;
+      background: #DDDDDD;
+      transition: transform 0.5s ease;
+      transform-origin: center;
+    }
+
+    .overlay {
+      position: absolute;
+      top: 0;
+      right: 0;
+      left: 0;
+      bottom: 0;
+    }
+
+    #tooltip {
+      position: absolute;
+      display: none;
+      margin-left: 15px;
+      padding: 3px;
+      position: absolute;
+      z-index: 1000;
+      text-shadow:
+        -1px -1px 0 #FFF,
+        1px -1px 0 #FFF,
+        -1px 1px 0 #FFF,
+        1px 1px 0 #FFF;
+      pointer-events: none;
+    }
+
+    .selectionMenu {
+      position: absolute;
+      font-family: "Helvetica Neue", Helvetica, "Arial", sans-serif;
+      bottom: 0px;
+      left: 0px;
+      display: flex;
+      align-items: center;
+      justify-content: left;
+      border-bottom-left-radius: 10px;
+      -webkit-touch-callout: none;
+      /* iOS Safari */
+      -webkit-user-select: none;
+      /* Safari */
+      -khtml-user-select: none;
+      /* Konqueror HTML */
+      -moz-user-select: none;
+      /* Old versions of Firefox */
+      -ms-user-select: none;
+      /* Internet Explorer/Edge */
+      user-select: none;
+      /* Non-prefixed version, currently
+                                  supported by Chrome, Edge, Opera and Firefox */
+      /* Force allow pointer events */
+      pointer-events: auto !important;
+
+    }
+
+    .selectionMenu .menuEntry {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      /* width:70px; */
+      height: 25px;
+      padding: 3px;
+      font-size: 13px;
+      padding-left: 5px;
+      padding-right: 5px;
+      background-color: var(--color);
+      color: white;
+      text-align: center;
+      text-decoration: none;
+      transition: width 0.25s, height 0.25s, font-size 0.25s, background-color 0.25s, font-weight 0.25s, color 0.25;
+      /* overflow: hidden; */
+    }
+
+    .selectionMenu .hasAction {
+      cursor: pointer;
+    }
+
+    /* #selectionmenu .menuEntry:hover{
+      height:30px;
+      cursor: pointer;
+    } */
+
+
+    .slider {
+      -webkit-appearance: none;
+      height: 15px;
+      background: #d3d3d3;
+      outline: none;
+      width: 70px;
+      /* opacity: 0.7;
+      -webkit-transition: .2s;
+      transition: opacity .2s; */
+      margin-left: 5px;
+      margin-right: 5px;
+    }
+
+    .slider:hover {
+      opacity: 1;
+    }
+
+    .slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 15px;
+      height: 15px;
+      background: #2a3463;
+      cursor: pointer;
+    }
+
+    .slider::-moz-range-thumb {
+      width: 15px;
+      height: 15px;
+      background: #2a3463;
+      cursor: pointer;
+    }
+
+    :root {
+      --select-border: #777;
+      --select-focus: blue;
+      --select-arrow: var(--select-border);
+    }
+
+    select {
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      appearance: none;
+      background-color: transparent;
+      border: none;
+      padding: 0 1em 0 0;
+      margin: 0;
+      width: 100%;
+      font-family: inherit;
+      font-size: inherit;
+      cursor: inherit;
+      line-height: inherit;
+      z-index: 1;
+      outline: none;
+    }
+
+    select::-ms-expand {
+      display: none;
+    }
+
+    .selector {
+      display: grid;
+      grid-template-areas: "select";
+      align-items: center;
+      position: relative;
+      min-width: 15ch;
+      max-width: 30ch;
+      border: 1px solid var(--select-border);
+      border-radius: 0.15em;
+      padding: 0.15em 0.25em;
+      font-size: 0.8rem;
+      cursor: pointer;
+      line-height: 1.0;
+      margin-left: 2.5px;
+      margin-right: 2.5px;
+      background-color: rgb(255, 255, 255, 0.8);
+      /* background-image: linear-gradient(to top, #f9f9f9, #fff 33%); */
+    }
+
+    .selector select,
+    .selector::after {
+      grid-area: select;
+    }
+
+    .selector:not(.selector--multiple)::after {
+      content: "";
+      justify-self: end;
+      width: 0.8em;
+      height: 0.25em;
+      background-color: var(--select-arrow);
+      -webkit-clip-path: polygon(100% 0%, 0 0%, 50% 100%);
+      clip-path: polygon(100% 0%, 0 0%, 50% 100%);
+    }
+
+    select:focus+.focus {
+      position: absolute;
+      top: -1px;
+      left: -1px;
+      right: -1px;
+      bottom: -1px;
+      border: 2px solid var(--select-focus);
+      border-radius: inherit;
+    }
+
+    select[multiple] {
+      padding-right: 0;
+      /*
+      * Safari will not reveal an option
+      * unless the select height has room to 
+      * show all of it
+      * Firefox and Chrome allow showing 
+      * a partial option
+      */
+      height: 6rem;
+      /* 
+      * Experimental - styling of selected options
+      * in the multiselect
+      * Not supported crossbrowser
+      */
+    }
+
+    select[multiple] option {
+      white-space: normal;
+      outline-color: var(--select-focus);
+    }
+
+    .selector--disabled {
+      cursor: not-allowed;
+      background-color: #eee;
+      background-image: linear-gradient(to top, #ddd, #eee 33%);
+    }
+
+
+    .selector+label {
+      margin-top: 2rem;
+    }
+
+    #densityRegion {
+      position: absolute;
+      top: 0;
+      right: 0;
+      left: 0;
+      bottom: 0;
+      /* z-index: 1000; */
+      background: black;
+    }
+
+    .filterPanel {
+      position: relative;
+      top: 0;
+      right: 0;
+      left: 0;
+      /* height: 200px; */
+      /* z-index: 1000; */
+      /* background:black; */
+      pointer-events: none;
+      text-align: center;
+    }
+
+    .searchSelector {
+      font-family: 'SF Pro Text', -apple-system, BlinkMacSystemFont, Roboto, 'Segoe UI', Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';
+      /* height: 1px; */
+      margin-top: 0px;
+      text-align: center;
+      font-size: 18px;
+      width: 240px;
+      padding-top: 5px;
+      padding-bottom: 5px;
+      border: none;
+      border-bottom: 1px solid rgb(142, 26, 17);
+      border-radius: 0;
+      margin-bottom: 6px;
+      color: rgba(250, 125, 125, 1);
+      background-color: rgba(1, 1, 1, 0);
+
+      text-shadow:
+        -1px -1px 0 rgba(50, 50, 50, 0.333),
+        0 -1px 0 rgba(50, 50, 50, 0.333),
+        1px -1px 0 rgba(50, 50, 50, 0.333),
+        1px 0 0 rgba(50, 50, 50, 0.333),
+        1px 1px 0 rgba(50, 50, 50, 0.333),
+        0 1px 0 rgba(50, 50, 50, 0.333),
+        -1px 1px 0 rgba(50, 50, 50, 0.333),
+        -1px 0 0 rgba(50, 50, 50, 0.333);
+      pointer-events: all !important;
+    }
+
+    .searchSelector:focus {
+      outline: none;
+    }
+
+    .searchSelector::placeholder {
+      /* Chrome, Firefox, Opera, Safari 10.1+ */
+      color: rgb(255, 195, 195);
+      opacity: 1;
+      /* Firefox */
+    }
+
+    :root {
+      --tp-base-background-color: hsla(0, 0%, 10%, 0.80);
+      --tp-base-shadow-color: hsla(0, 0%, 0%, 0.2);
+      --tp-button-background-color: hsla(0, 0%, 80%, 1.00);
+      --tp-button-background-color-active: hsla(0, 0%, 100%, 1.00);
+      --tp-button-background-color-focus: hsla(0, 0%, 95%, 1.00);
+      --tp-button-background-color-hover: hsla(0, 0%, 85%, 1.00);
+      --tp-button-foreground-color: hsla(0, 0%, 0%, 0.80);
+      --tp-container-background-color: hsla(0, 0%, 0%, 0.30);
+      --tp-container-background-color-active: hsla(0, 0%, 0%, 0.60);
+      --tp-container-background-color-focus: hsla(0, 0%, 0%, 0.50);
+      --tp-container-background-color-hover: hsla(0, 0%, 0%, 0.40);
+      --tp-container-foreground-color: hsla(0, 0%, 100%, 0.50);
+      --tp-groove-foreground-color: hsla(0, 0%, 0%, 0.20);
+      --tp-input-background-color: hsla(0, 0%, 0%, 0.30);
+      --tp-input-background-color-active: hsla(0, 0%, 0%, 0.60);
+      --tp-input-background-color-focus: hsla(0, 0%, 0%, 0.50);
+      --tp-input-background-color-hover: hsla(0, 0%, 0%, 0.40);
+      --tp-input-foreground-color: hsla(0, 0%, 100%, 0.50);
+      --tp-label-foreground-color: hsla(0, 0%, 100%, 0.50);
+      --tp-monitor-background-color: hsla(0, 0%, 0%, 0.30);
+      --tp-monitor-foreground-color: hsla(0, 0%, 100%, 0.30);
+    }
+
+    /* Tooltip container */
+    .tooltip {
+
+      position: relative;
+      /* display: inline-block;
+      border-bottom: 1px dotted black; */
+      /* If you want dots under the hoverable text */
+      /* no pointer events */
+    }
+
+    /* Tooltip text */
+    .tooltip .tooltiptext {
+      visibility: hidden;
+      width: 200px;
+      background-color: rgba(60, 60, 60, 0.95);
+      color: #fff;
+      text-align: center;
+      padding: 3px 3px;
+      font-size: 12px;
+      border-radius: 3px;
+
+      /* Position the tooltip text - see examples below! */
+      position: absolute;
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    /* Show the tooltip text when you mouse over the tooltip container */
+    .tooltip:hover .tooltiptext {
+      visibility: visible;
+    }
+
+    .activated.tooltiptext {
+      visibility: visible;
+    }
+
+    /* .tooltip .tooltiptext.tooltipright {
+      top: -5px;
+      left: 105%;
+    }
+
+    .tooltip .tooltiptext.tooltipleft {
+      top: -5px;
+      right: 105%;
+    } */
+
+    .tooltip .tooltiptext.tooltiptop {
+      width: 120px;
+      bottom: 100%;
+      left: 50%;
+      margin-left: -60px;
+    }
+
+    .tooltip .tooltiptext.tooltiptop.leftAlign {
+      margin-left: -10px;
+    }
+
+    .tooltip .tooltiptext.tooltiptop.rightAlign {
+      margin-left: -110px;
+    }
+
+
+    .tooltip .tooltiptext.tooltipbottom {
+      width: 120px;
+      top: 100%;
+      left: 50%;
+      margin-left: -60px;
+    }
+
+    .tooltip .tooltiptext.tooltipbottom.leftAlign {
+      margin-left: -10px;
+    }
+
+    .tooltip .tooltiptext.tooltipbottom.rightAlign {
+      margin-left: -110px;
+    }
+
+    .tooltip .tooltiptext.tooltiptop::after {
+      content: " ";
+      position: absolute;
+      top: 100%;
+      /* At the bottom of the tooltip */
+      left: 50%;
+      margin-left: -5px;
+      border-width: 5px;
+      border-style: solid;
+      border-color: rgba(60, 60, 60, 0.95) transparent transparent transparent;
+    }
+
+
+    .tooltip .tooltiptext.tooltiptop.leftAlign::after {
+      margin-left: -55px;
+    }
+
+    .tooltip .tooltiptext.tooltiptop.rightAlign::after {
+      margin-left: 45px;
+    }
+
+    .tooltip .tooltiptext.tooltipbottom::after {
+      content: " ";
+      position: absolute;
+      bottom: 100%;
+      /* At the top of the tooltip */
+      left: 50%;
+      margin-left: -5px;
+      border-width: 5px;
+      border-style: solid;
+      border-color: transparent transparent rgba(60, 60, 60, 0.95) transparent;
+    }
+
+
+    .tooltip .tooltipright.tooltiptext::after {
+      content: " ";
+      position: absolute;
+      top: 50%;
+      left: 100%;
+      /* To the right of the tooltip */
+      margin-top: -5px;
+      border-width: 5px;
+      border-style: solid;
+      border-color: transparent transparent transparent rgba(60, 60, 60, 0.95);
+    }
+
+    */ .tooltip .tooltiptext {
+      opacity: 0;
+      transition: opacity 1s;
+    }
+
+    .tooltip:hover .tooltiptext {
+      opacity: 1;
+    }
+
+    .activated.tooltiptext {
+      opacity: 1;
+    }
+
+    .dragdropmessage {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: white;
+      font-size: 14px;
+      font-weight: bold;
+      text-align: center;
+      z-index: 1000;
+      border: 2px dashed white;
+      background: rgba(0, 0, 0, 0.65);
+      padding: 1em;
+      border-radius: 1em;
+      width: 75%;
+      height: 75%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      cursor: pointer;
+      pointer-events: none;
+    }
+
+    .dragdropmessage h1 {
+      font-size: 24px;
+    }
+
+
+    /* ... */
+
+
+    #helpButton {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      z-index: 2000;
+      padding: 5px 10px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+#helpOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  /* background: rgba(0, 0, 0, 0.6); */
+  display: none;
+  z-index: 1500;
+  pointer-events: none;
+}
+
+.helpText {
+  position: absolute;
+  color: #ffffff;
+  background-color: #333;
+  padding: 10px;
+  border-radius: 5px;
+  font-size: 14px;
+  pointer-events: auto;
+}
+
+.arrow {
+  position: absolute;
+  width: 0;
+  height: 0;
+  border-style: solid;
+}
+  </style>
+  <link href="data:text/css;base64,LyogCi5hdXRvY29tcGxldGUtc3VnZ2VzdGlvbnM6YmVmb3JlIHsKCWNvbnRlbnQ6ICIgIjsKCXBvc2l0aW9uOmFic29sdXRlOwoJd2lkdGg6IDA7CgloZWlnaHQ6IDA7Cgl0b3A6LTIwcHg7CgkKCWJvcmRlci1zdHlsZTogc29saWQ7Cglib3JkZXItd2lkdGg6IDAgMTAwcHggMTAwcHggMTAwcHg7Cglib3JkZXItY29sb3I6IHRyYW5zcGFyZW50IHRyYW5zcGFyZW50ICMwMDdiZmYgdHJhbnNwYXJlbnQ7Cn0gKi8KCi5hdXRvY29tcGxldGUtc3VnZ2VzdGlvbnMgewogIAlmb250LWZhbWlseTogIk9zd2FsZCI7CgkJdGV4dC1hbGlnbjogbGVmdDsKCQljdXJzb3I6IGRlZmF1bHQ7CgkJYm9yZGVyOiAxcHggc29saWQgI2NjYzsKCQliYWNrZ3JvdW5kOiAjZmZmOwoJCWJveC1zaGFkb3c6IDJweCAycHggNHB4IHJnYmEoMCwgMCwgMCwgLjIpOwoJCS8qIGNvcmUgc3R5bGVzIHNob3VsZCBub3QgYmUgY2hhbmdlZCAqLwoJCXBvc2l0aW9uOiBhYnNvbHV0ZTsKCQlkaXNwbGF5OiBub25lOwoJCXotaW5kZXg6IDk5OTk7CgkJbWF4LWhlaWdodDogMzYwcHg7CgkJb3ZlcmZsb3c6IGhpZGRlbjsKCQlvdmVyZmxvdy15OiBhdXRvOwoJCWJveC1zaXppbmc6IGJvcmRlci1ib3g7CgkJYm9yZGVyLXJhZGl1czogMHB4IDBweCA1cHggNXB4Owp9CgoKLmF1dG9jb21wbGV0ZS1zdWdnZXN0aW9uIHsKCQlwb3NpdGlvbjogcmVsYXRpdmU7CgkJcGFkZGluZzogMCAuM2VtOwoJCW92ZXJmbG93OiBoaWRkZW47CgkJLyogd2hpdGUtc3BhY2U6IG5vd3JhcDsgKi8KCQl3b3JkLWJyZWFrOiBicmVhay13b3JkOwoJCWZvbnQtc2l6ZTogMS4wMmVtOwoJCWNvbG9yOiAjMzMzOwoJCXRleHQtYWxpZ246IGxlZnQ7CgkJZm9udC13ZWlnaHQ6IG5vcm1hbDsKCQlwYWRkaW5nLWxlZnQ6MzBweDsKCQljdXJzb3I6IHBvaW50ZXI7Cn0KCi5hdXRvY29tcGxldGUtc3VnZ2VzdGlvbiAuc3VidGl0bGV7Cgljb2xvcjogIzc5Nzk3OTsKCS8qIGZvbnQtd2VpZ2h0OiAzMDA7ICovCglmb250LXNpemU6MTJweDsKCWxpbmUtaGVpZ2h0OjE0cHg7Cn0KCi5hdXRvY29tcGxldGUtc3VnZ2VzdGlvbiBiIHsKCQlmb250LXdlaWdodDogbm9ybWFsOwoJCWNvbG9yOiByZ2IoMTMxLCA3MSwgNjUpOwp9CgouYXV0b2NvbXBsZXRlLXN1Z2dlc3Rpb24gLmNvbnRlbnQgewoJYm9yZGVyLXRvcDogc29saWQgMXB4ICNmMmYyZjI7Cglib3JkZXItYm90dG9tOiBzb2xpZCAxcHggI2YyZjJmMjsKfQoKLmF1dG9jb21wbGV0ZS1zdWdnZXN0aW9uLnNlbGVjdGVkIHsKCQliYWNrZ3JvdW5kOiAjZjBmMGYwOwp9CgouYXV0b2NvbXBsZXRlLXN1Z2dlc3Rpb25zID4gLmF1dG9jb21wbGV0ZS1zdWdnZXN0aW9uewoJYm9yZGVyOm5vbmU7Cn0KCi5hdXRvY29tcGxldGUtc3VnZ2VzdGlvbnMgPiAuYXV0b2NvbXBsZXRlLXN1Z2dlc3Rpb24uZGlzY2lwbGluZXsKCQlib3JkZXItdG9wOiBzb2xpZCAycHggcmdiKDE1MSwgOTAsIDg1KTsKfQoKLmF1dG9jb21wbGV0ZS1zdWdnZXN0aW9ucyA+IC5hdXRvY29tcGxldGUtc3VnZ2VzdGlvbi5kaXNjaXBsaW5lIH4gLmF1dG9jb21wbGV0ZS1zdWdnZXN0aW9uLmRpc2NpcGxpbmV7Cglib3JkZXI6bm9uZTsKCQkKfQoKCi5hdXRvY29tcGxldGUtc3VnZ2VzdGlvbnMgPiAuYXV0b2NvbXBsZXRlLXN1Z2dlc3Rpb24uYXV0aG9yIC5pY29uewoJcG9zaXRpb246YWJzb2x1dGU7Cgl0b3A6N3B4OwoJbGVmdDo3cHg7Cgl3aWR0aDoxNHB4OwoJaGVpZ2h0OjE0cHg7Cgljb2xvcjogcmdiKDE1MSwgOTAsIDg1KTsKfQoKLmF1dG9jb21wbGV0ZS1zdWdnZXN0aW9ucyA+IC5hdXRvY29tcGxldGUtc3VnZ2VzdGlvbi5kaXNjaXBsaW5lIC5pY29uewoJcG9zaXRpb246YWJzb2x1dGU7Cgl0b3A6N3B4OwoJbGVmdDo3cHg7Cgl3aWR0aDoxNHB4OwoJaGVpZ2h0OjE0cHg7Cgljb2xvcjogcmdiKDE1MSwgOTAsIDg1KTsKfQoKCgoK" rel="stylesheet" type="text/css" media="screen" />
+  <script type="module" crossorigin src="../../assets/main-gmv0JS3z.js"></script>
+</head>
+
+
+
+
+<body>
+  <!-- <div id="densityRegion"></div> -->
+  <button id="helpButton">?</button>
+
+  <div id="helpOverlay"></div>
+
+  <div id="netviz"></div>
+  <div id="loading"></div>
+
+  <div id="loadingPanel">
+    <div id="centerloading"></div>
+    <div style="padding:5px;text-align:center;margin:auto">Loading Data...<br />
+      (may take a minute or two)</div>
+  </div>
+
+  <div id="message" style="display:none">press space to start the layout</div>
+
+  <script>
+const helpButton = document.getElementById('helpButton');
+const netviz = document.getElementById('netviz');
+const helpOverlay = document.getElementById('helpOverlay');
+let displayingHelp = false;
+const registeredHelps = [];
+const scaleFactor = 0.80;
+
+function registerHelp(selector, direction, htmlContent) {
+  const helpContainer = document.createElement('div');
+  helpContainer.classList.add('helpText');
+  helpContainer.innerHTML = htmlContent;
+
+  const arrow = document.createElement('div');
+  arrow.classList.add('arrow');
+  helpContainer.appendChild(arrow);
+
+  helpOverlay.appendChild(helpContainer);
+
+  registeredHelps.push({ selector, direction, helpContainer, arrow });
+}
+
+function positionHelpElements() {
+  registeredHelps.forEach(({ selector, direction, helpContainer, arrow }) => {
+    let targetElement;
+    let targetRect;
+
+    if (Array.isArray(selector)) {
+      // If selector is a relative position inside netviz
+      const [x, y] = selector;
+      const netvizRect = netviz.getBoundingClientRect();
+      targetRect = {
+        top: netvizRect.top + y * netvizRect.height,
+        left: netvizRect.left + x * netvizRect.width,
+        width: 0,
+        height: 0,
+        bottom: netvizRect.top + y * netvizRect.height,
+        right: netvizRect.left + x * netvizRect.width
+      };
+    } else if (typeof selector === 'string') {
+      if (selector.startsWith('#')) {
+        targetElement = document.getElementById(selector.substring(1));
+      } else if (selector.startsWith('.')) {
+        targetElement = document.querySelector(selector);
+      } else {
+        console.error('Invalid selector specified');
+        return;
+      }
+
+      if (!targetElement) {
+        console.error(`Element not found for selector: ${selector}`);
+        return;
+      }
+
+      targetRect = targetElement.getBoundingClientRect();
+    } else {
+      console.error('Invalid selector specified');
+      return;
+    }
+
+    const helpTextRect = helpContainer.getBoundingClientRect();
+    const arrowSize = 10;
+
+    let top, left;
+    let arrowTop, arrowLeft;
+
+    switch (direction) {
+      case 'top':
+        top = targetRect.top - helpTextRect.height - arrowSize;
+        left = targetRect.left + targetRect.width / 2 - helpTextRect.width / 2;
+        arrowTop = helpTextRect.height;
+        arrowLeft = helpTextRect.width / 2 - arrowSize / 2;
+        arrow.style.borderWidth = `${arrowSize}px ${arrowSize}px 0 ${arrowSize}px`;
+        arrow.style.borderColor = `#333 transparent transparent transparent`;
+        break;
+
+      case 'bottom':
+        top = targetRect.bottom + arrowSize;
+        left = targetRect.left + targetRect.width / 2 - helpTextRect.width / 2;
+        arrowTop = -arrowSize;
+        arrowLeft = helpTextRect.width / 2 - arrowSize / 2;
+        arrow.style.borderWidth = `0 ${arrowSize}px ${arrowSize}px ${arrowSize}px`;
+        arrow.style.borderColor = `transparent transparent #333 transparent`;
+        break;
+
+      case 'left':
+        top = targetRect.top + targetRect.height / 2 - helpTextRect.height / 2;
+        left = targetRect.left - helpTextRect.width - arrowSize;
+        arrowTop = helpTextRect.height / 2 - arrowSize / 2;
+        arrowLeft = helpTextRect.width; // Position arrow on the right edge of the tooltip
+        arrow.style.borderWidth = `${arrowSize}px 0 ${arrowSize}px ${arrowSize}px`;
+        arrow.style.borderColor = `transparent transparent transparent #333`;
+        break;
+
+      case 'right':
+        top = targetRect.top + targetRect.height / 2 - helpTextRect.height / 2;
+        left = targetRect.right + arrowSize;
+        arrowTop = helpTextRect.height / 2 - arrowSize / 2;
+        arrowLeft = -arrowSize; // Position arrow on the left edge of the tooltip
+        arrow.style.borderWidth = `${arrowSize}px ${arrowSize}px ${arrowSize}px 0`;
+        arrow.style.borderColor = `transparent #333 transparent transparent`;
+        break;
+
+      default:
+        console.error('Invalid direction specified');
+        return;
+    }
+
+    // Ensure help text is within the window bounds
+    top = Math.max(0, Math.min(top, window.innerHeight - helpTextRect.height));
+    left = Math.max(0, Math.min(left, window.innerWidth - helpTextRect.width));
+
+    helpContainer.style.top = `${top}px`;
+    helpContainer.style.left = `${left}px`;
+
+    // Set arrow properties
+    arrow.style.position = 'absolute';
+    arrow.style.top = `${arrowTop}px`;
+    arrow.style.left = `${arrowLeft}px`;
+  });
+}
+
+
+
+function handleTransitionEnd() {
+  if (displayingHelp) {
+    helpOverlay.style.display = 'block';
+    positionHelpElements();
+  } else {
+    helpOverlay.style.display = 'none';
+  }
+}
+
+helpButton.addEventListener('click', () => {
+  if (!displayingHelp) {
+    netviz.style.transform = `scale(${scaleFactor})`;
+    netviz.addEventListener('transitionend', handleTransitionEnd, { once: true });
+    displayingHelp = true;
+  } else {
+    netviz.style.transform = 'scale(1)';
+    displayingHelp = false;
+    helpOverlay.style.display = 'none';
+  }
+});
+
+window.addEventListener('resize', () => {
+  if (displayingHelp) {
+    positionHelpElements();
+  }
+});
+// Example usage
+registerHelp('#colorSelector', 'top', `
+<span style="max-width: 220px; display: inline-block;">
+  Select from the Options Below to Highlight Specific Apects of the Network.
+  <br /> <br />
+    <span style="font-size:11px">
+      You can also choose the color palette that best fit your vision.
+    </span>
+  </span>
+
+`);
+registerHelp('#edgeOpacitySlider', 'bottom', `
+<span style="max-width: 220px; display: inline-block; max-height: 100px; overflow-y: auto;">
+  You can change the opacity of the ties.
+</span>
+`);
+
+registerHelp('#nodeSizeSlider', 'bottom', `
+<span style="max-width: 220px; display: inline-block; max-height: 100px; overflow-y: auto;">
+  You can change the size of the nodes.
+</span>
+`);
+
+registerHelp('.searchSelector', 'right', `
+<span style="max-width: 350px; display: inline-block; max-height: 150px; overflow-y: auto;">
+  Type a Search Term to Highlight Articles in the Visualization Based on Their Titles.
+  <br /> <br />
+  <span style="font-size:11px">
+    Advanced search is also available by starting your query with an * (asterisk) followed by the advanced query.
+    You can search for papers based on their authors, publication years, keywords and more.
+    <br /><br />
+    To search for paper based on a specific time range use the following format:
+    <br />
+    <br />
+    <em>*Year>2005</em> (for papers published after 2005) or *<em>Year<2010</em> (for papers published before 2010).
+    <br /><br />
+    To search for papers based on a specific attribute use the following format:
+    <br />
+    <br />
+    <em>*AttributeName~SearchTerm</em>
+    <br />
+    <br />
+    e.g, *Authors~Chao will highlight papers with Chao in their authors list.
+    If you want to ignore case sensitivity, use the following format:
+    <br /><br />
+    <em>*AttributeName~/SearchTerm/i</em>
+    <br /><br />
+    e.g, <em>*Authors~/chao/i</em> will highlight papers with Chao in their authors list regardless of the case.
+    <br /><br />
+    Note that the author names are not standardized in the dataset, so the same authors may appear with different names.
+    e.g, Guo, Chao and Guo, C.
+    <br /><br />
+    You can also combine search terms using & (and) or | (or), e.g.:
+    <br /><br />
+    <em>*Authors~Chao&Year>2005</em> will highlight papers with Chao in their authors list published after 2005.
+    <br /><br />
+    <em>*Authors~Chao|Keywords~Giving</em> will highlight papers with Chao in their authors list or with Phil in their keywords.
+    <br /><br />
+</span>
+`);
+registerHelp([0.7,0.5], 'right', `
+<span style="max-width: 350px; display: inline-block; max-height: 150px; overflow-y: auto;">
+  <em>Olá</em>, Welcome to the Wonderland of Philanthropic & Nonprofit Studies.
+  <br /> <br />
+  <span style="font-size:11px">
+    This is an interactive network visualization of philanthropic and nonprofit articles in
+    the Web of Science (WoS).
+    <br /><br />
+    You may not find some articles because they are not citing
+    or being cited by other articles in the network or they are not identified as
+    research articles in the WoS (see details in the paper).
+    <br /><br />
+    You can zoom in and out using your mouse wheel or trackpad.
+    <br /><br />
+    Have fun and get some new ideas for your research!
+</span>
+`);
+registerHelp([0.10,0.45], 'bottom', `
+<span style="max-width: 350px; display: inline-block; max-height: 150px; overflow-y: auto;">
+  Cluster Descriptions<br /><br />
+  <em>Cluster 1</em>: Nonprofit Organizations and the Nonprofit Sector
+  <br /><br />
+  <span style="font-size:11px">
+    This cluster examines nonprofit organizations and the nonprofit sector as a whole. At the organizational level, it includes structures, governance, interactions, and practices related to financial sustainability and service delivery within nonprofits. At the sector level, it includes government partnerships, accountability, and evolution.
+  </span>
+  <br /><br />
+  <em>Cluster 2</em>: Social Movements
+  <br /><br />
+  <span style="font-size:11px">
+    This cluster examines social movements, domestic and cross-national, focusing on their emergence, evolution, and impact. Key topics include the strategies and factors shaping mobilization and public discourse, such as collective identities, emotions, political opportunities, and traditional and digital media. It also examines the political and cultural contexts in which activism occurs, with particular attention to the interaction between grassroots organizing and broader sociopolitical dynamics and democratic processes.
+  </span>
+  <br /><br />
+  <em>Cluster 3</em>: Prosocial Behaviors (in Children and Adolescents)
+  <br /><br />
+  <span style="font-size:11px">
+    This cluster examines prosocial behaviors, primarily in children and adolescents. It includes the measurement of prosociality (using self-reports, teacher and parent reports, and longitudinal data), factors affecting the developmental trajectory of prosocial attitudes and behaviors from early childhood through adolescence, influencing factors such as age, gender, and development stage, the influence of the social networks of parents, peers, and teachers, and the interplay between prosocial and antisocial behaviors.
+  </span>
+  <br /><br />
+  <em>Cluster 4</em>: Group Cooperation and Social Dilemmas in Experimental Games
+  <br /><br />
+  <span style="font-size:11px">
+    This cluster examines group cooperative behaviors in social dilemma settings from a mostly social science perspective. Experiments (including those based on the public good, dictator, trust, and ultimatum games) are used to test theories of the determinants of cooperation, defection, punishment, and free-riding and to distinguish the motives (including behavioral aspects such as free riding, individual traits, social norms) underlying such decisions.
+  </span>
+  <br /><br />
+  <em>Cluster 5</em>: Social Entrepreneurship and Enterprise
+  <br /><br />
+  <span style="font-size:11px">
+    This cluster examines social entrepreneurship and enterprises, including motivations, ethical challenges, and organizational models used by social enterprises. It also includes outcomes such as sustainability, innovation, and value creation within the social economy.
+  </span>
+  <br /><br />
+  <em>Cluster 6</em>: Civic Engagement and Volunteerism
+  <br /><br />
+  <span style="font-size:11px">
+    This cluster examines motivations and other determinants of civic engagement and volunteerism (such as age, youth involvement, and education), the role of organizations, the effects of volunteering on the volunteer and on society (including effects on social capital and community development), and volunteer management (including recruitment, retention, and volunteer satisfaction). It also highlights the role of both formal and informal volunteering in civic engagement.
+  </span>
+  <br /><br />
+  <em>Cluster 7</em>: Charitable Contributions
+  <br /><br />
+  <span style="font-size:11px">
+    This cluster examines motivations for giving (such as warm glow, impure altruism, monetary incentives, image motivation, and tax deductions) and the effectiveness of various fundraising strategies (e.g., targeted appeals, crowdfunding, and marketing). It also includes socio-economic impacts of charitable giving on public goods and income distribution. Experiments and economic modeling are commonly used to study topics in this cluster.
+  </span>
+  <br /><br />
+  <em>Cluster 8</em>: Biological Evolution of Cooperation and Altruism
+  <br /><br />
+  <span style="font-size:11px">
+    This cluster examines evolutionary mechanisms of cooperation and altruism among individuals of various species with a focus on evolutionary game theory, kin selection, cooperative breeding, and group selection. Evolutionary models, simulations, and real-world observations are commonly used. The impact of population structure, genetic factors, and individual fitness on the evolution of cooperation are also examined.
+  </span>
+  <br /><br />
+  <em>Cluster 9</em>: Faith-Based Charity and Social Welfare
+  <br /><br />
+  <span style="font-size:11px">
+    This cluster examines faith-based charitable practices and their impacts on social welfare across various historical and geographical contexts (from the Ottoman Empire to modern applications in countries like Malaysia, Indonesia, and Britain). Most studies in this cluster focus on Islamic traditions such as Waqf (Islamic endowments) and Zakat (almsgiving). Comparative analyses between Islamic charitable practices and Christian and secular organizations on their organizational structure and funding mechanisms are also included.
+  </span>
+  <br /><br />
+  <em>Cluster 10</em>: Government Provision of Public Goods
+  <br /><br />
+  <span style="font-size:11px">
+    This cluster examines economic and political factors, such as public spending, local government structure, taxation, voter preferences, and fiscal policies, that shape the cost and optimization of government provision of public goods using equilibrium modeling techniques such as the Lindahl solution. It includes the social welfare consequences of equilibrium provision.
+  </span>
+  <br /><br />
+  <em>Cluster 11</em>: Biological Donations
+  <br /><br />
+  <span style="font-size:11px">
+    This cluster examines demographic, social, and psychological determinants that shape blood and organ donations. It also includes ethical considerations and strategies for increasing donation rates.
+  </span>
+  <br /><br />
+  <em>Cluster 12</em>: Corporate Giving and Strategic Philanthropy
+  <br /><br />
+  <span style="font-size:11px">
+    This cluster examines the determinants (e.g., political connections), strategic alignment with business goals, and benefits of corporate giving. Aspects of benefits include reputation, financial performance, consumer behavior, and stakeholder relationships. Chinese firms are particularly examined in this topic.
+  </span>
+  <br /><br />
+  <em>Cluster 13</em>: Governance of The Commons
+  <br /><br />
+  <span style="font-size:11px">
+    This cluster examines the tragedy of the commons, as well as collective actions and institutional efforts in managing and sustaining commons resources like forests, fisheries, water, and agricultural land. Elinor Ostrom and Garrett Hardin are influential scholars. The importance of governing the commons is especially pronounced in domains such as agriculture, climate change, and biodiversity.
+  </span>
+  <br /><br />
+  <em>Cluster 14</em>: Self-help Groups
+  <br /><br />
+  <span style="font-size:11px">
+    This cluster examines self-help groups in improving substance recovery, well-being, and empowerment, particularly through peer support and group dynamics, across different cultural and regional contexts (e.g., south Asia and Africa).
+  </span>
+  <br /><br />
+  <em>Cluster 15</em>: Workplace Prosociality and Organizational Citizenship
+  <br /><br />
+  <span style="font-size:11px">
+    This cluster examines employee motivations (e.g., intrinsic and extrinsic), workplace characteristics (e.g., supervisor trust, leadership styles), and impacts on job performance of altruistic behaviors at and beyond the workplace. Social exchange theory and structural equation modeling are the primary theory and method used in this topic.
+  </span>
+  <br /><br />
+  <em>Cluster 16</em>: Altruism in Economic Applications
+  <br /><br />
+  <span style="font-size:11px">
+    This cluster examines the role of altruism in shaping intergenerational and international transfers (e.g., bequests, remittances, and parental support) and governmental policies (e.g., taxation, social security). It includes the effects of altruism on the equilibrium wealth distribution, household utility, and consumption, and fiscal and welfare policies (e.g., taxation, social security, and economic growth). Economics frameworks frequently used include overlapping generation models and dynastic models.
+  </span>
+  <br /><br />
+  <em>Cluster 17</em>: Gift-Giving
+  <br /><br />
+  <span style="font-size:11px">
+    This cluster examines gift-giving as a social and cultural practice from a mostly anthropological perspective to understand its tradition, rituals, and reciprocity across different societies, including topics regarding social (e.g., interpersonal bonds) and economic (e.g., consumer trust and marketing strategies) impacts, symbolic significance, and ethical considerations (e.g., bribery and corruption) of gift giving.
+  </span>
+  <br /><br />
+  <em>Cluster 18</em>: Community-Based Organizations in HIV/AIDS Prevention and Care
+  <br /><br />
+  <span style="font-size:11px">
+    This cluster examines the implementation, health outcomes, effectiveness, and challenges (e.g., capacity building) of HIV/AIDS health programs delivered by community-based organizations across various regions, particularly Africa and other resource-limited regions. Studies also highlight the important role of capacity building, qualitative assessments, and governmental partnerships in the success of these programs.
+  </span>
+</span>
+  `);
+
+  </script>
+
+</body>
+
+</html>
