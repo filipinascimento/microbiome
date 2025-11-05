@@ -34,7 +34,7 @@ mkdir -p Data Networks Figures
                xnetwork tqdm matplotlib colorcet
    ```
    Some analyses additionally require the optional `RModularity` Python package
-   (available from <https://github.com/rionbr/RModularity>) when computing
+   (available from <https://github.com/filipinascimento/RModularity>) when computing
    alternative modularity scores.
 3. **Prepare the input data** in `Data/`:
    - `metadata_full_18Nov2014.xlsx`: clinical and summary metadata. It must contain
